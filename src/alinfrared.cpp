@@ -83,7 +83,7 @@ using namespace std;
 using namespace AL;
 
 
-ALPtr<ALInfraredTools> gLMT;
+boost::shared_ptr<ALInfraredTools> gLMT;
 
 
 
@@ -797,7 +797,7 @@ bool ALInfraredTools::fileExist (const string& file)
   return isOpen;
 }
 
-ALInfrared::ALInfrared(AL::ALPtr<AL::ALBroker> broker, const std::string& name ): AL::ALModule(broker, name )
+ALInfrared::ALInfrared(boost::shared_ptr<AL::ALBroker> broker, const std::string& name ): AL::ALModule(broker, name )
 {
   rmctrlThreadId = 0;
   pipeThreadId = 0;

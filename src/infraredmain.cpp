@@ -26,7 +26,7 @@
 
 extern "C"
 {
-ALCALL int _createModule( AL::ALPtr<AL::ALBroker> pBroker )
+ALCALL int _createModule( boost::shared_ptr<AL::ALBroker> pBroker )
 {
   // init broker with the main broker inctance
   // from the parent executable

@@ -31,8 +31,8 @@ class ALInfrared : public AL::ALModule
 {
 protected:
 
-  AL::ALPtr<AL::ALLoggerProxy> fLoggerProxy;
-  AL::ALPtr<AL::ALMemoryProxy> fSTM;
+  boost::shared_ptr<AL::ALLoggerProxy> fLoggerProxy;
+  boost::shared_ptr<AL::ALMemoryProxy> fSTM;
 
   struct lirc_config *config1;
 
@@ -47,7 +47,7 @@ public:
   /**
    * Default Constructor.
    */
-  ALInfrared(AL::ALPtr<AL::ALBroker> pBroker, const std::string& pName );
+  ALInfrared(boost::shared_ptr<AL::ALBroker> pBroker, const std::string& pName );
 
   /**
    * Destructor.
