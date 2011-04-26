@@ -18,7 +18,7 @@ typedef enum IR_DATA_STATE {NONE=0, IP=10, IP1=11, IP2, IP3, IP4, UINT8=20, UINT
 
 typedef enum LIRCD_PART_OF_MSG {LIRC_HEX=0, LIRC_REPEAT, LIRC_KEY, LIRC_REMOTE, LIRC_SIDE} LIRCD_PART_OF_MSG;
 
-#include <alcore/alptr.h>
+#include <boost/shared_ptr.hpp>
 #include <alcommon/almodule.h>
 
 
