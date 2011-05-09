@@ -139,7 +139,7 @@ void ALInfrared::remoteControlThread()
             const std::string s = code;
             unsigned int found;
             unsigned int prevfound = 0;
-            uInt8 index_found = 0;
+            unsigned char index_found = 0;
             string RemoteValues[5];
 
             found=s.find_first_of(" ");
