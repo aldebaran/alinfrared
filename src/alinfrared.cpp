@@ -16,7 +16,7 @@
 #include <alproxies/almemoryproxy.h>
 #include <alproxies/alloggerproxy.h>
 
-#include <allog/allog.h>
+
 #include <qi/log.hpp>
 
 #include <stdio.h>
