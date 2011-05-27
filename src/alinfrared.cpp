@@ -17,6 +17,7 @@
 #include <alproxies/alloggerproxy.h>
 
 #include <allog/allog.h>
+#include <qi/log.hpp>
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -124,7 +125,7 @@ void ALInfrared::remoteControlThread()
 
     while(ready_to_get)
     {
-      alsinfo << getName() << ": remoteControlThread(): " << "Ready to get remote controls keys.";
+      qiLogInfo("allog.info") << getName() << ": remoteControlThread(): " << "Ready to get remote controls keys." << std::endl;
 
       usleep(50000);
 
@@ -272,7 +273,7 @@ void ALInfrared::remoteControlThread()
                 fSTM->insertData(ALMEMORY_S_Remote, RemoteValues[LIRC_REMOTE]);
                 fSTM->insertData(ALMEMORY_S_IrSide, RemoteValues[LIRC_SIDE]);
 
-                alsinfo << getName() << ": remoteControlThread(): " << "Got a key: " << s;
+                qiLogInfo("allog.info") << getName() << ": remoteControlThread(): " << "Got a key: " << s << std::endl;
               }
             }
 
@@ -322,25 +323,25 @@ void ALInfrared::pipeIrrecordCommunicationThread()
     ret_val = mkfifo(NP1, 0666);
 
     if ((ret_val == -1) && (errno != EEXIST)) {
-      alserror << getName() << ": pipeIrrecordCommunicationThread(): " << "Error creating the reading named pipe";
+      qiLogError("allog.error") << getName() << ": pipeIrrecordCommunicationThread(): " << "Error creating the reading named pipe" << std::endl;
     }
     else
     {
       //Open the first named pipe for reading
       rdfd = open(NP1, O_RDONLY);
-      alsdebug << getName() << ": pipeIrrecordCommunicationThread(): " << "Reading named pipe id: " << rdfd;
+      qiLogDebug("allog.debug") << getName() << ": pipeIrrecordCommunicationThread(): " << "Reading named pipe id: " << rdfd << std::endl;
     }
 
     ret_val = mkfifo(NP2, 0666);
 
     if ((ret_val == -1) && (errno != EEXIST)) {
-      alserror << getName() << ": pipeIrrecordCommunicationThread(): " << "Error creating the writing named pipe";
+      qiLogError("allog.error") << getName() << ": pipeIrrecordCommunicationThread(): " << "Error creating the writing named pipe" << std::endl;
     }
     else
     {
       //Open the second named pipe for writing
       wrfd = open(NP2, O_WRONLY);
-      alsdebug << getName() << ": pipeIrrecordCommunicationThread(): " << "Writing named pipe id: " << wrfd;
+      qiLogDebug("allog.debug") << getName() << ": pipeIrrecordCommunicationThread(): " << "Writing named pipe id: " << wrfd << std::endl;
     }
 
 
@@ -349,7 +350,7 @@ void ALInfrared::pipeIrrecordCommunicationThread()
     {
       numread = read(rdfd, buf, MAX_BUF_SIZE);
       buf[numread]='\0';
-      alsdebug << getName() << ": pipeIrrecordCommunicationThread(): " << "numread = " << numread << "buf = " << buf;
+      qiLogDebug("allog.debug") << getName() << ": pipeIrrecordCommunicationThread(): " << "numread = " << numread << "buf = " << buf << std::endl;
       const std::string s = buf;
 
       if(s.size()>1)
@@ -358,7 +359,7 @@ void ALInfrared::pipeIrrecordCommunicationThread()
         if(gMsgKey[MsgCounter].size()>38) gMsg[MsgCounter].insert(gMsg[MsgCounter].find_last_of("#")+1, gMsgKey[MsgCounter]);
       }
 
-      alsdebug << getName() << ": pipeIrrecordCommunicationThread(): " << "MsgCounter = " << MsgCounter;
+      qiLogDebug("allog.debug") << getName() << ": pipeIrrecordCommunicationThread(): " << "MsgCounter = " << MsgCounter << std::endl;
 
     }
     while(numread>0);
@@ -416,7 +417,7 @@ void ALInfrared::sendRemoteKey(const std::string& pRemote, const std::string& pK
 
   fSTM->insertData(ALMEMORY_A_Remote, pRemote);
   fSTM->insertData(ALMEMORY_A_Key, pKey);
-  alsinfo << getName() << ": sendRemoteKey(): " << "Remote = " << pRemote <<" / Key = " << pKey;
+  qiLogInfo("allog.info") << getName() << ": sendRemoteKey(): " << "Remote = " << pRemote <<" / Key = " << pKey << std::endl;
 }
 
 void ALInfrared::sendIpAddress(const std::string& pIP)
@@ -446,7 +447,7 @@ void ALInfrared::sendIpAddress(const std::string& pIP)
   (void)send(nao2nao, (prefix + IPValues[index_found]));
 
   fSTM->insertData(ALMEMORY_A_IP, pIP);
-  alsinfo << getName() << ": sendIpAddress(): " << "IP address = " << pIP ;
+  qiLogInfo("allog.info") << getName() << ": sendIpAddress(): " << "IP address = " << pIP  << std::endl;
 
 }
 
@@ -465,7 +466,7 @@ void ALInfrared::send8(const int& pOctet)
     (void)send(nao2nao, (prefix + gLMT->int2str(pOctet&0xFF)));
 
     fSTM->insertData(ALMEMORY_A_uInt8, pOctet);
-    alsinfo << getName() << ": send8(): " << "uInt8 value = " << pOctet ;
+    qiLogInfo("allog.info") << getName() << ": send8(): " << "uInt8 value = " << pOctet  << std::endl;
   }
 }
 
@@ -479,8 +480,8 @@ void ALInfrared::send32(const std::string& pData_IR)
   stringstream ss(pData_IR);
   ss >> n;
 
-  alsdebug << getName() << ": send32(): " << "************ pData_IR = " << pData_IR ;
-  alsdebug << getName() << ": send32(): " << "************ n = " << n ;
+  qiLogDebug("allog.debug") << getName() << ": send32(): " << "************ pData_IR = " << pData_IR  << std::endl;
+  qiLogDebug("allog.debug") << getName() << ": send32(): " << "************ n = " << n  << std::endl;
 
   if((n<0) || (n>4294967295u))
     throw ALERROR( getName(), "send32", std::string( "Error: The input should be a number between 0 and 4294967295 (2147483647 with choregraphe)."));
@@ -508,11 +509,11 @@ void ALInfrared::send32(const std::string& pData_IR)
     fSTM->insertData(ALMEMORY_A_uInt32_2, (int)(byte2));
     fSTM->insertData(ALMEMORY_A_uInt32_1, (int)(byte1));
 
-    alsinfo << getName() << ": send32(): " << "uInt32 value = " << pData_IR ;
-    alsinfo << getName() << ": send32(): " << "uInt32 octets = "  << (int)byte4 << " "
+    qiLogInfo("allog.info") << getName() << ": send32(): " << "uInt32 value = " << pData_IR << std::endl;
+    qiLogInfo("allog.info") << getName() << ": send32(): " << "uInt32 octets = "  << (int)byte4 << " "
                                                                   << (int)byte3 << " "
                                                                   << (int)byte2 << " "
-                                                                  << (int)byte1 << " " ;
+                                                                  << (int)byte1 << " "  << std::endl;
   }
 }
 
@@ -546,10 +547,10 @@ void ALInfrared::send32(const int& pOctet1, const int& pOctet2, const int& pOcte
     fSTM->insertData(ALMEMORY_A_uInt32_2, pOctet2);
     fSTM->insertData(ALMEMORY_A_uInt32_1, pOctet1);
 
-    alsinfo << getName() << ": send32(): " << "uInt32 octets = " << pOctet4 << " "
+    qiLogInfo("allog.info") << getName() << ": send32(): " << "uInt32 octets = " << pOctet4 << " "
                                                                  << pOctet3 << " "
                                                                  << pOctet2 << " "
-                                                                 << pOctet1 << " " ;
+                                                                 << pOctet1 << " "  << std::endl;
   }
 
 }
@@ -581,7 +582,7 @@ void ALInfrared::confRemoteRecordStart(const std::string& pRm_name)
   {
     if(!gLMT->fileExist(PT_CONFIG_REMOTES + pRm_name)) // If file new (doesn't exist)...
     {
-      alsinfo << getName() << ": confRemoteRecordStart(): " << "Init record";
+      qiLogInfo("allog.info") << getName() << ": confRemoteRecordStart(): " << "Init record" << std::endl;
 
       irrecord_aborted = false;
 
@@ -597,7 +598,7 @@ void ALInfrared::confRemoteRecordStart(const std::string& pRm_name)
 
       system((workDir + irRecord + pRm_name).c_str());
 
-      alsinfo << getName() << ": confRemoteRecordStart(): " << "Record STOP";
+      qiLogInfo("allog.info") << getName() << ": confRemoteRecordStart(): " << "Record STOP" << std::endl;
 
       usleep(3500000); //Permit to the web page to receive de final message (because of a 3 sec polling)
 
@@ -650,14 +651,14 @@ string ALInfrared::confRemoteRecordCancel()
   if(irrecord_aborted == false)
   {
     if(!kill((pid_t)atoi(line),SIGTERM)) //Kill irrecord and check if successful
-      alsdebug << getName() << ": confRemoteRecordGetStatus(): " << "irrecord KILL successful";
+      qiLogDebug("allog.debug") << getName() << ": confRemoteRecordGetStatus(): " << "irrecord KILL successful" << std::endl;
     else
-      alserror << getName() << ": confRemoteRecordGetStatus(): " << "irrecord KILL error";
+      qiLogError("allog.error") << getName() << ": confRemoteRecordGetStatus(): " << "irrecord KILL error" << std::endl;
 
     if(!remove(IRREC_PIDFILE))
-      alsdebug << getName() << ": confRemoteRecordGetStatus(): " << "irrecord.pid removed successful";
+      qiLogDebug("allog.debug") << getName() << ": confRemoteRecordGetStatus(): " << "irrecord.pid removed successful" << std::endl;
     else
-      alserror << getName() << ": confRemoteRecordGetStatus(): " << "irrecord.pid removed error";
+      qiLogError("allog.error") << getName() << ": confRemoteRecordGetStatus(): " << "irrecord.pid removed error" << std::endl;
 
 
     f.open(CHILD_PIDFILE);
@@ -665,15 +666,15 @@ string ALInfrared::confRemoteRecordCancel()
     f.close();
 
     if(!kill((pid_t)atoi(line),SIGTERM)) //Kill irrecord child process and check if successful
-      alsdebug << getName() << ": confRemoteRecordGetStatus(): " << "irrecord polling child KILL successful";
+      qiLogDebug("allog.debug") << getName() << ": confRemoteRecordGetStatus(): " << "irrecord polling child KILL successful" << std::endl;
     else
-      alserror << getName() << ": confRemoteRecordGetStatus(): " << "irrecord polling child KILL error";
+      qiLogError("allog.error") << getName() << ": confRemoteRecordGetStatus(): " << "irrecord polling child KILL error" << std::endl;
 
 
     if(!remove(CHILD_PIDFILE))
-      alsdebug << getName() << ": confRemoteRecordGetStatus(): " << "polling_child.pid removed successful";
+      qiLogDebug("allog.debug") << getName() << ": confRemoteRecordGetStatus(): " << "polling_child.pid removed successful" << std::endl;
     else
-      alserror << getName() << ": confRemoteRecordGetStatus(): " << "polling_child.pid removed error";
+      qiLogError("allog.error") << getName() << ": confRemoteRecordGetStatus(): " << "polling_child.pid removed error" << std::endl;
 
     irrecord_aborted = true;
   }
@@ -694,9 +695,9 @@ void ALInfrared::confUpdateRemoteConfig(void)
   f.close();
 
   if(kill((pid_t)atoi(line),SIGHUP)==0) // Send HUP signal to the first lirc daemon and check if successful
-    alsdebug << getName() << ": confUpdateRemoteConfig(): " << "lircd SIGHUP successful";
+    qiLogDebug("allog.debug") << getName() << ": confUpdateRemoteConfig(): " << "lircd SIGHUP successful" << std::endl;
   else
-    alserror << getName() << ": confUpdateRemoteConfig(): " << "lircd SIGHUP error";
+    qiLogError("allog.error") << getName() << ": confUpdateRemoteConfig(): " << "lircd SIGHUP error" << std::endl;
 
 
   f.open(LIRCD_SEND_PID);
@@ -704,9 +705,9 @@ void ALInfrared::confUpdateRemoteConfig(void)
   f.close();
 
   if(kill((pid_t)atoi(line),SIGHUP)==0) // Send HUP signal to the second lirc daemon and check if successful
-    alsdebug << getName() << ": confUpdateRemoteConfig(): " << "lircd1 SIGHUP successful";
+    qiLogDebug("allog.debug") << getName() << ": confUpdateRemoteConfig(): " << "lircd1 SIGHUP successful" << std::endl;
   else
-    alserror << getName() << ": confUpdateRemoteConfig(): " << "lircd1 SIGHUP error";
+    qiLogError("allog.error") << getName() << ": confUpdateRemoteConfig(): " << "lircd1 SIGHUP error" << std::endl;
 }
 
 
@@ -717,7 +718,7 @@ void ALInfrared::confRemoteRecordSave(void)
   char rname[30];
   char pc[70];
 
-  alsdebug << getName() << ": confRemoteRecordSave(): " << "Try to update lircd.conf";
+  qiLogDebug("allog.debug") << getName() << ": confRemoteRecordSave(): " << "Try to update lircd.conf";
 
   fref.open(REMOTETOSET);
   if(!fref.is_open()) // if the file do not exist, create it
@@ -739,7 +740,7 @@ void ALInfrared::confRemoteRecordSave(void)
     fref.getline(rname,29);
     strcpy(pc, REMOTEFOLDER);
     strcat(pc, rname);
-    alsdebug << getName() << ": confRemoteRecordSave(): " << pc;
+    qiLogDebug("allog.debug") << getName() << ": confRemoteRecordSave(): " << pc << std::endl;
     fi.open(pc);
     if(fi.good()) fo << fi.rdbuf();
     fi.close();
