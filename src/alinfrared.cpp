@@ -878,9 +878,8 @@ ALInfrared::ALInfrared(boost::shared_ptr<AL::ALBroker> broker, const std::string
 
   try {
     fSTM = getParentBroker()->getMemoryProxy();
-    std::cout << "IR proxy to STM created \n";
   } catch(ALError& e) {
-    std::cout << "IR could not connect to Memory. Error : " << e.toString() << endl;
+    alserror << "IR could not connect to Memory. Error : " << e.what() << endl;
   }
 
   fSTM->declareEvent(ALMEMORY_Remote_Event);
@@ -901,7 +900,7 @@ ALInfrared::~ALInfrared()
     if(lirc_lircd_rcv!=-1) lirc_deinit();
   }
   catch (ALError& e) {
-    cout << "error: " << e.toString() << endl;
+    alserror << "ALInfrared: Exception while disposing Lirc: " << e.what() << endl;
   }
 }
 
