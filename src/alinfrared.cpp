@@ -9,7 +9,7 @@
 #include <alcommon/almodule.h>
 #include <pthread.h>
 #include <signal.h>
-#include <math.h>
+#include <cmath>
 #include <iostream>
 #include <string.h>
 #include <sstream>
