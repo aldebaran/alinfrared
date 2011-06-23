@@ -14,8 +14,6 @@
 #include <string.h>
 #include <sstream>
 #include <alproxies/almemoryproxy.h>
-#include <alproxies/alloggerproxy.h>
-
 
 #include <qi/log.hpp>
 

@@ -30,8 +30,6 @@ namespace AL
 class ALInfrared : public AL::ALModule
 {
 protected:
-
-  boost::shared_ptr<AL::ALLoggerProxy> fLoggerProxy;
   boost::shared_ptr<AL::ALMemoryProxy> fSTM;
 
   struct lirc_config *config1;
