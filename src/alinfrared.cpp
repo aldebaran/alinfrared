@@ -835,15 +835,16 @@ ALInfrared::ALInfrared(boost::shared_ptr<AL::ALBroker> broker, const std::string
 
   functionName("send32", "ALInfrared", "Send 4 octets by IR.");
   addParam( "Data_IR", "4 octets to send through IR.");
-  completeAndCheck<ALInfrared, const std::string&, void> (&ALInfrared::send32, fMethodDesc);
+  completeAndCheck<ALInfrared, const std::string&, void> (&ALInfrared::send32, getCurrentMethodDescription());
   bindMethodOverload(createFunctor<ALInfrared, std::string, void>(this, &ALInfrared::send32));
+
 
   functionName("send32", "ALInfrared", "Send 4 octets by IR.");
   addParam( "Octet1", "Octet 1 to send through IR.");
   addParam( "Octet2", "Octet 2 to send through IR.");
   addParam( "Octet3", "Octet 3 to send through IR.");
   addParam( "Octet4", "Octet 4 to send through IR.");
-  completeAndCheck<ALInfrared, const int&, const int&, const int&, const int&, void> (&ALInfrared::send32, fMethodDesc);
+  completeAndCheck<ALInfrared, const int&, const int&, const int&, const int&, void> (&ALInfrared::send32, getCurrentMethodDescription());
   bindMethodOverload(createFunctor<ALInfrared, int, int, int, int, void> (this, &ALInfrared::send32));
 
   functionName("confRemoteRecordSave", "ALInfrared",  "Rewrite the LIRC daemon configuration file (lircd.conf) with every"
