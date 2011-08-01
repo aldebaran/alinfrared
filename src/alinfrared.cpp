@@ -16,6 +16,7 @@
 #include <alproxies/almemoryproxy.h>
 
 #include <qi/log.hpp>
+#include <qi/os.hpp>
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -594,7 +595,7 @@ void ALInfrared::confRemoteRecordStart(const std::string& pRm_name)
 
       usleep(300000);
 
-      system((workDir + irRecord + pRm_name).c_str());
+      qi::os::system((workDir + irRecord + pRm_name).c_str());
 
       qiLogInfo("hardware.alinfrared") << "confRemoteRecordStart(): " << "Record STOP" << std::endl;
 
