@@ -120,7 +120,14 @@ void ALInfrared::remoteControlThread()
 
   while(!getParentBroker()->isExiting())
   {
-    usleep(200000);
+    for (int i=0; i<20;  i++)
+    {
+      usleep(10000);
+      if (getParentBroker()->isExiting())
+      {
+        return;
+      }
+    }
 
     while(ready_to_get)
     {
@@ -316,7 +323,7 @@ void ALInfrared::pipeIrrecordCommunicationThread()
   int rdfd = 0, ret_val, numread;
   char buf[MAX_BUF_SIZE];
 
-  while(1)
+  while(!getParentBroker()->isExiting())
   {
     /* Create the first named - pipe */
     ret_val = mkfifo(NP1, 0666);
@@ -359,6 +366,11 @@ void ALInfrared::pipeIrrecordCommunicationThread()
       }
 
       qiLogDebug("hardware.alinfrared") << "pipeIrrecordCommunicationThread(): " << "MsgCounter = " << MsgCounter << std::endl;
+
+      if (getParentBroker()->isExiting())
+      {
+        return;
+      }
 
     }
     while(numread>0);
@@ -895,6 +907,8 @@ ALInfrared::ALInfrared(boost::shared_ptr<AL::ALBroker> broker, const std::string
 
 ALInfrared::~ALInfrared()
 {
+  usleep(50000); // Worst case
+
   // A try block
   try {
     if(lirc_lircd_rcv!=-1) lirc_deinit();
