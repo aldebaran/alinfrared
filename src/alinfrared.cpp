@@ -118,12 +118,12 @@ void ALInfrared::remoteControlThread()
   char IR_data_state = NONE;
 
 
-  while(!getParentBroker()->isExiting())
+  while(!fIsExiting)
   {
     for (int i=0; i<20;  i++)
     {
       usleep(10000);
-      if (getParentBroker()->isExiting())
+      if (fIsExiting)
       {
         return;
       }
@@ -323,7 +323,7 @@ void ALInfrared::pipeIrrecordCommunicationThread()
   int rdfd = 0, ret_val, numread;
   char buf[MAX_BUF_SIZE];
 
-  while(!getParentBroker()->isExiting())
+  while(!fIsExiting)
   {
     /* Create the first named - pipe */
     ret_val = mkfifo(NP1, 0666);
@@ -367,7 +367,7 @@ void ALInfrared::pipeIrrecordCommunicationThread()
 
       qiLogDebug("hardware.alinfrared") << "pipeIrrecordCommunicationThread(): " << "MsgCounter = " << MsgCounter << std::endl;
 
-      if (getParentBroker()->isExiting())
+      if (fIsExiting)
       {
         return;
       }
@@ -811,6 +811,7 @@ bool ALInfraredTools::fileExist (const string& file)
 
 ALInfrared::ALInfrared(boost::shared_ptr<AL::ALBroker> broker, const std::string& name ): AL::ALModule(broker, name )
 {
+  fIsExiting = false;
   rmctrlThreadId = 0;
   pipeThreadId = 0;
   lirc_lircd_rcv = -1;
@@ -907,7 +908,8 @@ ALInfrared::ALInfrared(boost::shared_ptr<AL::ALBroker> broker, const std::string
 
 ALInfrared::~ALInfrared()
 {
-  usleep(50000); // Worst case
+  fIsExiting = true;
+  usleep(100000); // Worst case
 
   // A try block
   try {

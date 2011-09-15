@@ -176,6 +176,8 @@ private:
 
   bool irrecord_aborted;
 
+  bool fIsExiting;
+
 };
 
 
