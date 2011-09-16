@@ -37,7 +37,7 @@ protected:
   std::string lircd1_sock;
   std::string nao2nao;
 
-  int send(const std::string& remote, const std::string& key);
+  int send(const std::string& remote, const std::string& key, int timeMs);
 
 
 public:
@@ -71,7 +71,16 @@ public:
    * @param pRemote : string containing the remote control name
    * @param pKey : string containing the button name
    */
-  void sendRemoteKey(const std::string& pRemote, const std::string& pKey );
+  void sendRemoteKey(const std::string& pRemote, const std::string& pKey);
+
+  /**
+   * Function sendRemoteKeyWithTime is used as an IR remote control.
+   * @param pRemote : string containing the remote control name
+   * @param pKey : string containing the button name
+   * @param pTimeMs : the time to send the reomte key in ms. 0 deals like sendRemoteKey.
+   */
+  void sendRemoteKeyWithTime(const std::string& pRemote, const std::string& pKey, const int& pTimeMs);
+
 
   /**
    * Function sendIpAddress is called to send an IP address

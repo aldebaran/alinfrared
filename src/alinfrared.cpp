@@ -414,11 +414,17 @@ void ALInfrared::deinitReception(void)
 /********************** SEND IR ***************************************************************/
 /**********************************************************************************************/
 
-void ALInfrared::sendRemoteKey(const std::string& pRemote, const std::string& pKey )
+void ALInfrared::sendRemoteKey(const std::string& pRemote, const std::string& pKey)
+{
+  ALInfrared::sendRemoteKeyWithTime(pRemote, pKey, 0);
+}
+
+
+void ALInfrared::sendRemoteKeyWithTime(const std::string& pRemote, const std::string& pKey, const int& timeMs)
 {
   int sendSuccess;
 
-  sendSuccess = send(pRemote, pKey);
+  sendSuccess = send(pRemote, pKey, timeMs);
 
   if(sendSuccess == -1)
     throw ALERROR( getName(), "sendRemoteKey", std::string( "Error: The remote '") + pRemote
@@ -441,21 +447,21 @@ void ALInfrared::sendIpAddress(const std::string& pIP)
   unsigned int prevfound=0;
   unsigned int index_found=0;
 
-  (void)send(nao2nao, (prefix + header));
+  (void)send(nao2nao, (prefix + header), 0);
 
   found=pIP.find_first_of(".\0");
   while ((found!=string::npos) && (index_found<4))
   {
     IPValues[index_found].assign(pIP, prevfound, found-prevfound);
     usleep(400000);
-    (void)send(nao2nao, (prefix + IPValues[index_found++]));
+    (void)send(nao2nao, (prefix + IPValues[index_found++]), 0);
     prevfound = found+1;
     found=pIP.find_first_of(".\0", found+1);
   }
 
   usleep(400000);
   IPValues[index_found].assign(pIP, prevfound, found-prevfound);
-  (void)send(nao2nao, (prefix + IPValues[index_found]));
+  (void)send(nao2nao, (prefix + IPValues[index_found]), 0);
 
   fSTM->insertData(ALMEMORY_A_IP, pIP);
   qiLogInfo("hardware.alinfrared") << "sendIpAddress(): " << "IP address = " << pIP  << std::endl;
@@ -472,9 +478,9 @@ void ALInfrared::send8(const int& pOctet)
     throw ALERROR( getName(), "send8", std::string( "Error: The input should be a number between 0 and 255."));
   else
   {
-    (void)send(nao2nao, (prefix + header));
+    (void)send(nao2nao, (prefix + header), 0);
     usleep(400000);
-    (void)send(nao2nao, (prefix + gLMT->int2str(pOctet&0xFF)));
+    (void)send(nao2nao, (prefix + gLMT->int2str(pOctet&0xFF)), 0);
 
     fSTM->insertData(ALMEMORY_A_uInt8, pOctet);
     qiLogInfo("hardware.alinfrared") << "send8(): " << "uInt8 value = " << pOctet  << std::endl;
@@ -504,16 +510,16 @@ void ALInfrared::send32(const std::string& pData_IR)
     byte2 = (n>>8) & 0xFF;
     byte1 = (n) & 0xFF;
 
-    (void)send(nao2nao, (prefix + header));
+    (void)send(nao2nao, (prefix + header), 0);
     usleep(400000);
 
-    (void)send(nao2nao, (prefix + gLMT->int2str(byte1)));
+    (void)send(nao2nao, (prefix + gLMT->int2str(byte1)), 0);
     usleep(400000);
-    (void)send(nao2nao, (prefix + gLMT->int2str(byte2)));
+    (void)send(nao2nao, (prefix + gLMT->int2str(byte2)), 0);
     usleep(400000);
-    (void)send(nao2nao, (prefix + gLMT->int2str(byte3)));
+    (void)send(nao2nao, (prefix + gLMT->int2str(byte3)), 0);
     usleep(400000);
-    (void)send(nao2nao, (prefix + gLMT->int2str(byte4)));
+    (void)send(nao2nao, (prefix + gLMT->int2str(byte4)), 0);
 
     fSTM->insertData(ALMEMORY_A_uInt32_4, (int)(byte4));
     fSTM->insertData(ALMEMORY_A_uInt32_3, (int)(byte3));
@@ -542,16 +548,16 @@ void ALInfrared::send32(const int& pOctet1, const int& pOctet2, const int& pOcte
   }
   else
   {
-    (void)send(nao2nao.c_str(), (prefix + header).c_str());
+    (void)send(nao2nao.c_str(), (prefix + header).c_str(),0 );
 
     usleep(400000);
-    (void)send(nao2nao, (prefix + gLMT->int2str(pOctet1 & 0xFF)));
+    (void)send(nao2nao, (prefix + gLMT->int2str(pOctet1 & 0xFF)), 0);
     usleep(400000);
-    (void)send(nao2nao, (prefix + gLMT->int2str(pOctet2 & 0xFF)));
+    (void)send(nao2nao, (prefix + gLMT->int2str(pOctet2 & 0xFF)), 0);
     usleep(400000);
-    (void)send(nao2nao, (prefix + gLMT->int2str(pOctet3 & 0xFF)));
+    (void)send(nao2nao, (prefix + gLMT->int2str(pOctet3 & 0xFF)), 0);
     usleep(400000);
-    (void)send(nao2nao, (prefix + gLMT->int2str(pOctet4 & 0xFF)));
+    (void)send(nao2nao, (prefix + gLMT->int2str(pOctet4 & 0xFF)), 0);
 
     fSTM->insertData(ALMEMORY_A_uInt32_4, pOctet4);
     fSTM->insertData(ALMEMORY_A_uInt32_3, pOctet3);
@@ -566,11 +572,11 @@ void ALInfrared::send32(const int& pOctet1, const int& pOctet2, const int& pOcte
 
 }
 
-int ALInfrared::send(const std::string& remote, const std::string& key)
+int ALInfrared::send(const std::string& remote, const std::string& key, int timeMs)
 {
   int ret;
 
-  ret = lirc_send_key(lircd1_sock.c_str(), remote.c_str(), key.c_str());
+  ret = lirc_send_key_with_time(lircd1_sock.c_str(), remote.c_str(), key.c_str(), timeMs);
 
   return ret;
 }
@@ -838,6 +844,15 @@ ALInfrared::ALInfrared(boost::shared_ptr<AL::ALBroker> broker, const std::string
   addParam( "Remote", "IR remote control name.");
   addParam( "Key", "IR remote control key name.");
   BIND_METHOD(ALInfrared::sendRemoteKey);
+
+
+
+  functionName("sendRemoteKeyWithTime", "ALInfrared", "Simulate a remote control (Nao as a remote control).");
+  addParam( "Remote", "IR remote control name.");
+  addParam( "Key", "IR remote control key name.");
+  addParam( "pTimeMs", "The time in ms when the remote key must be send. 0 deals like sendRemoteKey");
+  BIND_METHOD(ALInfrared::sendRemoteKeyWithTime);
+
 
   functionName("sendIpAddress", "ALInfrared", "Send an IP by IR.");
   addParam( "IP", "IP adress to send through IR.");
