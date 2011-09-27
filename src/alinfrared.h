@@ -190,45 +190,5 @@ private:
 };
 
 
-class ALInfraredTools : protected AL::ALModule
-{
-public:
-
-  /**
-   * int2str
-   * @param n is a number to convert in string
-   * @return a string with the converted value
-   */
-  std::string int2str (int n);
-
-  /**
-   * long2str
-   * @param n is a number to convert in string
-   * @return a string with the converted value
-   */
-  std::string long2str (long int n);
-
-  /**
-   * str2int
-   * @param str is a string containing a number
-   * @return an int with the converted value
-   */
-  int str2int (const std::string &str);
-
-  /**
-   * strhex2int
-   * @param str is a string containing an hexa number
-   * @return an int with the converted value
-   */
-  int strhex2int (const std::string &str);
-
-
-  /**
-   * fileExist
-   * @param file is a string containing file name with path
-   * @return true if file exists, false if not
-   */
-  bool fileExist(const std::string& file);
-};
 #endif  // INFRARED_ALINFRARED_H
 

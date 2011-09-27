@@ -82,10 +82,45 @@ static const std::string& ALMEMORY_A_uInt32_4 ="Device/SubDeviceList/IR/LIRC/Dat
 using namespace std;
 using namespace AL;
 
+static string int2str (int n)
+{
+  stringstream ss;
+  ss << n;
+  return ss.str();
+}
 
-boost::shared_ptr<ALInfraredTools> gLMT;
+static string long2str (long int n)
+{
+  stringstream ss;
+  ss << n;
+  return ss.str();
+}
 
+static int str2int (const string &str)
+{
+  stringstream ss(str);
+  int n;
+  ss >> n;
+  return n;
+}
 
+static int strhex2int (const string &str)
+{
+  stringstream ss(str);
+  int n;
+  ss >> std::hex >> n;
+  return n;
+}
+
+static bool fileExist (const string& file)
+{
+  bool isOpen;
+  ifstream f;
+  f.open(file.c_str());
+  isOpen = f.is_open();
+  f.close();
+  return isOpen;
+}
 
 /**********************************************************************************************/
 /************************* THREAD to receive from remote control ******************************/
@@ -205,7 +240,7 @@ void ALInfrared::remoteControlThread()
               else if(IR_data_state == UINT8)
               {
                 IR_data_state = UINT8_1;
-                uInt8_1 = gLMT->str2int(RemoteValues[LIRC_KEY].substr(4));
+                uInt8_1 = str2int(RemoteValues[LIRC_KEY].substr(4));
                 fSTM->insertData(ALMEMORY_S_uInt8, uInt8_1);
                 fSTM->raiseEvent(ALMEMORY_uInt8_Event, uInt8_1);
               }
@@ -220,22 +255,22 @@ void ALInfrared::remoteControlThread()
               else if(IR_data_state == UINT32)
               {
                 IR_data_state = UINT32_1;
-                uInt32_1 = gLMT->str2int(RemoteValues[LIRC_KEY].substr(4));
+                uInt32_1 = str2int(RemoteValues[LIRC_KEY].substr(4));
               }
               else if(IR_data_state == UINT32_1)
               {
                 IR_data_state = UINT32_2;
-                uInt32_2 = gLMT->str2int(RemoteValues[LIRC_KEY].substr(4));
+                uInt32_2 = str2int(RemoteValues[LIRC_KEY].substr(4));
               }
               else if(IR_data_state == UINT32_2)
               {
                 IR_data_state = UINT32_3;
-                uInt32_3 = gLMT->str2int(RemoteValues[LIRC_KEY].substr(4));
+                uInt32_3 = str2int(RemoteValues[LIRC_KEY].substr(4));
               }
               else if(IR_data_state == UINT32_3)
               {
                 IR_data_state = UINT32_4;
-                uInt32_4 = gLMT->str2int(RemoteValues[LIRC_KEY].substr(4));
+                uInt32_4 = str2int(RemoteValues[LIRC_KEY].substr(4));
                 fSTM->insertData(ALMEMORY_S_uInt32_1, uInt32_1);
                 fSTM->insertData(ALMEMORY_S_uInt32_2, uInt32_2);
                 fSTM->insertData(ALMEMORY_S_uInt32_3, uInt32_3);
@@ -258,7 +293,7 @@ void ALInfrared::remoteControlThread()
             {
               IR_data_state = NONE;
 
-              repeat_code_num = gLMT->strhex2int(RemoteValues[LIRC_REPEAT]);
+              repeat_code_num = strhex2int(RemoteValues[LIRC_REPEAT]);
 
               //Avoid multi-detect of one key until keyRepeatThreshold
               if((abs(RemoteValues[LIRC_HEX].compare(sn_cmp))) || (repeat_code_num == 0) || (repeat_code_num >= keyRepeatThreshold))
@@ -267,10 +302,10 @@ void ALInfrared::remoteControlThread()
 
                 AL::ALValue RemoteEvent;
                 RemoteEvent.arrayPush(RemoteValues[LIRC_HEX]);
-                RemoteEvent.arrayPush(gLMT->strhex2int(RemoteValues[LIRC_REPEAT]));
+                RemoteEvent.arrayPush(strhex2int(RemoteValues[LIRC_REPEAT]));
                 RemoteEvent.arrayPush(RemoteValues[LIRC_KEY]);
                 RemoteEvent.arrayPush(RemoteValues[LIRC_REMOTE]);
-                RemoteEvent.arrayPush(gLMT->str2int(RemoteValues[LIRC_SIDE]));
+                RemoteEvent.arrayPush(str2int(RemoteValues[LIRC_SIDE]));
                 fSTM->raiseEvent(ALMEMORY_Remote_Event, RemoteEvent);
 
                 fSTM->insertData(ALMEMORY_S_LircCode, RemoteValues[LIRC_HEX]);
@@ -283,7 +318,7 @@ void ALInfrared::remoteControlThread()
               }
             }
 
-            fSTM->raiseEvent(ALMEMORY_IrSide_Event, gLMT->str2int(RemoteValues[LIRC_SIDE]));
+            fSTM->raiseEvent(ALMEMORY_IrSide_Event, str2int(RemoteValues[LIRC_SIDE]));
 
             free(code);
           }
@@ -480,7 +515,7 @@ void ALInfrared::send8(const int& pOctet)
   {
     (void)send(nao2nao, (prefix + header), 0);
     usleep(400000);
-    (void)send(nao2nao, (prefix + gLMT->int2str(pOctet&0xFF)), 0);
+    (void)send(nao2nao, (prefix + int2str(pOctet&0xFF)), 0);
 
     fSTM->insertData(ALMEMORY_A_uInt8, pOctet);
     qiLogInfo("hardware.alinfrared") << "send8(): " << "uInt8 value = " << pOctet  << std::endl;
@@ -513,13 +548,13 @@ void ALInfrared::send32(const std::string& pData_IR)
     (void)send(nao2nao, (prefix + header), 0);
     usleep(400000);
 
-    (void)send(nao2nao, (prefix + gLMT->int2str(byte1)), 0);
+    (void)send(nao2nao, (prefix + int2str(byte1)), 0);
     usleep(400000);
-    (void)send(nao2nao, (prefix + gLMT->int2str(byte2)), 0);
+    (void)send(nao2nao, (prefix + int2str(byte2)), 0);
     usleep(400000);
-    (void)send(nao2nao, (prefix + gLMT->int2str(byte3)), 0);
+    (void)send(nao2nao, (prefix + int2str(byte3)), 0);
     usleep(400000);
-    (void)send(nao2nao, (prefix + gLMT->int2str(byte4)), 0);
+    (void)send(nao2nao, (prefix + int2str(byte4)), 0);
 
     fSTM->insertData(ALMEMORY_A_uInt32_4, (int)(byte4));
     fSTM->insertData(ALMEMORY_A_uInt32_3, (int)(byte3));
@@ -551,13 +586,13 @@ void ALInfrared::send32(const int& pOctet1, const int& pOctet2, const int& pOcte
     (void)send(nao2nao.c_str(), (prefix + header).c_str(),0 );
 
     usleep(400000);
-    (void)send(nao2nao, (prefix + gLMT->int2str(pOctet1 & 0xFF)), 0);
+    (void)send(nao2nao, (prefix + int2str(pOctet1 & 0xFF)), 0);
     usleep(400000);
-    (void)send(nao2nao, (prefix + gLMT->int2str(pOctet2 & 0xFF)), 0);
+    (void)send(nao2nao, (prefix + int2str(pOctet2 & 0xFF)), 0);
     usleep(400000);
-    (void)send(nao2nao, (prefix + gLMT->int2str(pOctet3 & 0xFF)), 0);
+    (void)send(nao2nao, (prefix + int2str(pOctet3 & 0xFF)), 0);
     usleep(400000);
-    (void)send(nao2nao, (prefix + gLMT->int2str(pOctet4 & 0xFF)), 0);
+    (void)send(nao2nao, (prefix + int2str(pOctet4 & 0xFF)), 0);
 
     fSTM->insertData(ALMEMORY_A_uInt32_4, pOctet4);
     fSTM->insertData(ALMEMORY_A_uInt32_3, pOctet3);
@@ -597,7 +632,7 @@ void ALInfrared::confRemoteRecordStart(const std::string& pRm_name)
 
   if(!MsgCounter) // If confRemoteRecordStart is not already running...
   {
-    if(!gLMT->fileExist(PT_CONFIG_REMOTES + pRm_name)) // If file new (doesn't exist)...
+    if(!fileExist(PT_CONFIG_REMOTES + pRm_name)) // If file new (doesn't exist)...
     {
       qiLogInfo("hardware.alinfrared") << "confRemoteRecordStart(): " << "Init record" << std::endl;
 
@@ -773,47 +808,6 @@ void ALInfrared::confRemoteRecordSave(void)
 /**********************************************************************************************/
 /************************** OTHER FUNCTIONS ***************************************************/
 /**********************************************************************************************/
-
-
-string ALInfraredTools::int2str (int n)
-{
-  stringstream ss;
-  ss << n;
-  return ss.str();
-}
-
-string ALInfraredTools::long2str (long int n)
-{
-  stringstream ss;
-  ss << n;
-  return ss.str();
-}
-
-int ALInfraredTools::str2int (const string &str)
-{
-  stringstream ss(str);
-  int n;
-  ss >> n;
-  return n;
-}
-
-int ALInfraredTools::strhex2int (const string &str)
-{
-  stringstream ss(str);
-  int n;
-  ss >> std::hex >> n;
-  return n;
-}
-
-bool ALInfraredTools::fileExist (const string& file)
-{
-  bool isOpen;
-  ifstream f;
-  f.open(file.c_str());
-  isOpen = f.is_open();
-  f.close();
-  return isOpen;
-}
 
 ALInfrared::ALInfrared(boost::shared_ptr<AL::ALBroker> broker, const std::string& name ): AL::ALModule(broker, name )
 {
