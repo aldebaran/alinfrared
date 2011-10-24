@@ -1,6 +1,26 @@
 /**
  * @author Raphael Leber
  * Copyright (c) Aldebaran Robotics 2010 All Rights Reserved.
+ *
+ * This module manages several LIRC-related files.
+ *
+ * Remotes configuration files:
+ * ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+ * You can find every remote configuration files in "/home/nao/remotes/config/".
+ *
+ * Remotes configuration activated:
+ * ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+ * To activate or deactivate a remote, you can add or remove its name in the
+ * file "/home/nao/remotes/remotetoset".
+ *
+ * LIRC configuration file:
+ * ^^^^^^^^^^^^^^^^^^^^^^^^
+ * The LIRC configuration file "/home/nao/remotes/lircd.conf" contains the
+ * configuration of every remotes activated.
+ * This file will be updated and loaded by the LIRC daemon every time you click
+ * on Save in the NAO web page (Settings), or every time you call the function
+ * :ref:`alinfrared-api::confRemoteRecordSave`.
+ *
  */
 
 #ifndef INFRARED_ALINFRARED_H
