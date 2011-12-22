@@ -14,14 +14,10 @@
 #include "alinfrared.h"
 
 
-
-#ifdef INFRARED_IS_REMOTE_OFF
-
-#ifdef _WIN32
+#if defined(INFRARED_IS_REMOTE_OFF) && defined(_WIN32)
     #define ALCALL __declspec(dllexport)
 #else
     #define ALCALL
-#endif
 #endif
 
 extern "C"
