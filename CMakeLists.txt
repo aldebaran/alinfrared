@@ -14,11 +14,11 @@ cmake_minimum_required(VERSION 2.6.4 FATAL_ERROR)
 include("${CMAKE_CURRENT_SOURCE_DIR}/bootstrap.cmake")
 
 set(INFRARED_SRCS
-  alinfrared.h
-  alinfrared.cpp
-  infraredmain.cpp
+  src/alinfrared.h
+  src/alinfrared.cpp
+  src/infraredmain.cpp
 )
 
 qi_create_lib(infrared SHARED SUBFOLDER naoqi ${INFRARED_SRCS})
-qi_use_lib(infrared ALCOMMON ALMATH LIRCCLIENT ALLOG)
+qi_use_lib(infrared ALCOMMON ALMATH LIRCCLIENT)
 
