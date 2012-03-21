@@ -1,6 +1,6 @@
 /**
  * @author Raphael Leber
- * Copyright (c) Aldebaran Robotics 2010 All Rights Reserved.
+ * Copyright (c) Aldebaran Robotics 2010, 2012 All Rights Reserved.
  *
  * This module manages several LIRC-related files.
  *
@@ -40,7 +40,7 @@ typedef enum LIRCD_PART_OF_MSG {LIRC_HEX=0, LIRC_REPEAT, LIRC_KEY, LIRC_REMOTE, 
 
 #include <boost/shared_ptr.hpp>
 #include <alcommon/almodule.h>
-
+#include <alproxies/almemoryproxy.h>
 
 namespace AL
 {
