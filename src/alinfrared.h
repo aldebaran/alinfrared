@@ -128,38 +128,6 @@ public:
    * @param pOctet4 : 4th octet of the 32 bits value
    */
   void send32(const int& pOctet1, const int& pOctet2, const int& pOctet3, const int& pOctet4);
-
-  /**
-   * Function confRemoteRecordStart is called when user start creating a new remote
-   * @param pRm_name : string containing the name of the remote control to record
-   */
-  void confRemoteRecordStart(const std::string& pRm_name);
-
-  /**
-   * Function confRemoteRecordNext() is called when the user click on NEXT
-   * @return string wich is the last message to display
-   */
-  std::string confRemoteRecordNext();
-
-  /**
-   * Function confRemoteRecordAddKey is called when user validate a new key name
-   * @param pKeyname : string containing the name of the key to record or nothing if there is no more keys to record
-   * @return string wich is the last message to display
-   */
-  std::string confRemoteRecordAddKey(const std::string& pKeyname);
-
-  /**
-   * Function confRemoteRecordGetStatus() is called during polling in order to update further information
-   * @return string wich is the last message to display
-   */
-  std::string confRemoteRecordGetStatus();
-
-  /**
-   * Function confRemoteRecordCancel() is called when user want to cancel the record process
-   * @return string wich is the last message to display
-   */
-  std::string confRemoteRecordCancel();
-
   /**
    * Function confRemoteRecordSave
    * Read in the remotetoset file to know which lirc configuration should be implemented in the lircd.conf file
@@ -173,12 +141,6 @@ public:
    * Check the PID of the 2 lirc daemon and send them a SIGHUP signal
    */
   void confUpdateRemoteConfig(void);
-
-  /**
-   * Function pipeIrrecordCommunicationThread()
-   * Call the thread which manage remote recording
-   */
-  void pipeIrrecordCommunicationThread();
 
   /**
    * Function remoteControlThread()

@@ -336,83 +336,6 @@ void ALInfrared::remoteControlThread()
 
 }
 
-
-
-
-/**********************************************************************************************/
-/******************************** THREAD to read from pipe ************************************/
-/**********************************************************************************************/
-void * pipeThread(void * ptr)
-{
-  ((ALInfrared*)ptr)->pipeIrrecordCommunicationThread();
-  return NULL;
-}
-
-void ALInfrared::pipeIrrecordCommunicationThread()
-{
-#if defined (__linux__)
-  // thread name
-  prctl(PR_SET_NAME, "pipeIrrecordCommunicationThread", 0, 0, 0);
-#endif
-
-  int rdfd = 0, ret_val, numread;
-  char buf[MAX_BUF_SIZE];
-
-  while(!fIsExiting)
-  {
-    /* Create the first named - pipe */
-    ret_val = mkfifo(NP1, 0666);
-
-    if ((ret_val == -1) && (errno != EEXIST)) {
-      qiLogError("hardware.alinfrared") << "pipeIrrecordCommunicationThread(): " << "Error creating the reading named pipe" << std::endl;
-    }
-    else
-    {
-      //Open the first named pipe for reading
-      rdfd = open(NP1, O_RDONLY);
-      qiLogDebug("hardware.alinfrared") << "pipeIrrecordCommunicationThread(): " << "Reading named pipe id: " << rdfd << std::endl;
-    }
-
-    ret_val = mkfifo(NP2, 0666);
-
-    if ((ret_val == -1) && (errno != EEXIST)) {
-      qiLogError("hardware.alinfrared") << "pipeIrrecordCommunicationThread(): " << "Error creating the writing named pipe" << std::endl;
-    }
-    else
-    {
-      //Open the second named pipe for writing
-      wrfd = open(NP2, O_WRONLY);
-      qiLogDebug("hardware.alinfrared") << "pipeIrrecordCommunicationThread(): " << "Writing named pipe id: " << wrfd << std::endl;
-    }
-
-
-
-    do
-    {
-      numread = read(rdfd, buf, MAX_BUF_SIZE);
-      buf[numread]='\0';
-      qiLogDebug("hardware.alinfrared") << "pipeIrrecordCommunicationThread(): " << "numread = " << numread << "buf = " << buf << std::endl;
-      const std::string s = buf;
-
-      if(s.size()>1)
-      {
-        gMsg[++MsgCounter] = s;
-        if(gMsgKey[MsgCounter].size()>38) gMsg[MsgCounter].insert(gMsg[MsgCounter].find_last_of("#")+1, gMsgKey[MsgCounter]);
-      }
-
-      qiLogDebug("hardware.alinfrared") << "pipeIrrecordCommunicationThread(): " << "MsgCounter = " << MsgCounter << std::endl;
-
-      if (fIsExiting)
-      {
-        return;
-      }
-
-    }
-    while(numread>0);
-  }
-}
-
-
 /**********************************************************************************************/
 /********************** RECEIVE IR ************************************************************/
 /**********************************************************************************************/
@@ -616,127 +539,6 @@ int ALInfrared::send(const std::string& remote, const std::string& key, int time
   return ret;
 }
 
-
-
-/**********************************************************************************************/
-/********************** RECORD AND MANAGE NEW REMOTE ******************************************/
-/**********************************************************************************************/
-
-void ALInfrared::confRemoteRecordStart(const std::string& pRm_name)
-{
-  std::ifstream f;
-  const std::string& exist_msg = "#END#Name already used. Chose an other name or enter this name again to remove to the previous configuration";
-  const std::string& irRecord = PT_IRRECORD;
-  const std::string& remotePath = REMOTEFOLDER;
-  const std::string& workDir = "cd /home/nao/remotes/config/;";
-
-  if(!MsgCounter) // If confRemoteRecordStart is not already running...
-  {
-    if(!fileExist(PT_CONFIG_REMOTES + pRm_name)) // If file new (doesn't exist)...
-    {
-      qiLogInfo("hardware.alinfrared") << "confRemoteRecordStart(): " << "Init record" << std::endl;
-
-      irrecord_aborted = false;
-
-      if(ready_to_get)
-      {
-        ready_to_get = FALSE;
-        lirc_deinit(); // Disable receiving client
-      }
-
-      pthread_create(&pipeThreadId, NULL, pipeThread, (void *)this);
-
-      usleep(300000);
-
-      qi::os::system((workDir + irRecord + pRm_name).c_str());
-
-      qiLogInfo("hardware.alinfrared") << "confRemoteRecordStart(): " << "Record STOP" << std::endl;
-
-      usleep(3500000); //Permit to the web page to receive de final message (because of a 3 sec polling)
-
-      for(unsigned int iErase=MsgCounter; iErase > 0 ; iErase--)
-        gMsg[iErase].clear();
-
-      if(irrecord_aborted) //if record process is aborted...
-        remove((remotePath + pRm_name).c_str());  //remove the lirc config file generated
-
-      MsgCounter = 0;
-    }
-    else
-    {
-      gMsg[MsgCounter] = exist_msg;
-    }
-  }
-}
-
-
-string ALInfrared::confRemoteRecordNext()
-{
-  write(wrfd, "#NEXT#", 6);
-  return gMsg[MsgCounter];
-}
-
-
-string ALInfrared::confRemoteRecordAddKey(const std::string& pKeyname)
-{
-  gMsgKey[MsgCounter+1] = "The key \"" + pKeyname + "\" was successfuly recorded.";
-  write(wrfd, pKeyname.c_str(), (strlen(pKeyname.c_str())+1));
-  return gMsg[MsgCounter];
-}
-
-
-string ALInfrared::confRemoteRecordGetStatus()
-{
-  return gMsg[MsgCounter];
-}
-
-
-string ALInfrared::confRemoteRecordCancel()
-{
-  std::ifstream f, f1;
-  char line[8];
-
-  f.open(IRREC_PIDFILE);
-  f.get(line, 7);
-  f.close();
-
-  if(irrecord_aborted == false)
-  {
-    if(!kill((pid_t)atoi(line),SIGTERM)) //Kill irrecord and check if successful
-      qiLogDebug("hardware.alinfrared") << "confRemoteRecordGetStatus(): " << "irrecord KILL successful" << std::endl;
-    else
-      qiLogError("hardware.alinfrared") << "confRemoteRecordGetStatus(): " << "irrecord KILL error" << std::endl;
-
-    if(!remove(IRREC_PIDFILE))
-      qiLogDebug("hardware.alinfrared") << "confRemoteRecordGetStatus(): " << "irrecord.pid removed successful" << std::endl;
-    else
-      qiLogError("hardware.alinfrared") << "confRemoteRecordGetStatus(): " << "irrecord.pid removed error" << std::endl;
-
-
-    f.open(CHILD_PIDFILE);
-    f.get(line, 7);
-    f.close();
-
-    if(!kill((pid_t)atoi(line),SIGTERM)) //Kill irrecord child process and check if successful
-      qiLogDebug("hardware.alinfrared") << "confRemoteRecordGetStatus(): " << "irrecord polling child KILL successful" << std::endl;
-    else
-      qiLogError("hardware.alinfrared") << "confRemoteRecordGetStatus(): " << "irrecord polling child KILL error" << std::endl;
-
-
-    if(!remove(CHILD_PIDFILE))
-      qiLogDebug("hardware.alinfrared") << "confRemoteRecordGetStatus(): " << "polling_child.pid removed successful" << std::endl;
-    else
-      qiLogError("hardware.alinfrared") << "confRemoteRecordGetStatus(): " << "polling_child.pid removed error" << std::endl;
-
-    irrecord_aborted = true;
-  }
-
-  return "#BEGIN#";
-}
-
-
-
-
 void ALInfrared::confUpdateRemoteConfig(void)
 {
   std::ifstream f, f1;
@@ -870,40 +672,11 @@ ALInfrared::ALInfrared(boost::shared_ptr<AL::ALBroker> broker, const std::string
   completeAndCheck<ALInfrared, const int&, const int&, const int&, const int&, void> (&ALInfrared::send32, getCurrentMethodDescription());
   bindMethodOverload(createFunctor<ALInfrared, int, int, int, int, void> (this, &ALInfrared::send32));
 
-  functionName("confRemoteRecordSave", "ALInfrared",  "Rewrite the LIRC daemon configuration file (lircd.conf) with every"
-                                                      "remotes configuration concatenated, and reload it in LIRC daemons");
-  BIND_METHOD(ALInfrared::confRemoteRecordSave);
-
-  //functionName("confUpdateRemoteConfig", "ALInfrared", "Send SIGHUP signal to lircd daemons, in order to read again lircd.conf");
-  //BIND_METHOD(ALInfrared::confUpdateRemoteConfig);
-
-  functionName("confRemoteRecordStart", "ALInfrared", "Start remote record process.");
-  addParam( "Rm_name", "Name of the remote control to reccord.");
-  BIND_METHOD(ALInfrared::confRemoteRecordStart);
-
-  functionName("confRemoteRecordNext", "ALInfrared", "Called when the user click on NEXT.");
-  setReturn("return","Returns the last message given by irrecord (lirc program to record IR remote control)." );
-  BIND_METHOD(ALInfrared::confRemoteRecordNext);
-
-  functionName("confRemoteRecordAddKey", "ALInfrared", "Called during polling in order to update further information.");
-  addParam( "Keyname", "Name of the next remote control key to reccord.");
-  setReturn("return","Returns the last message given by irrecord (LIRC program to record IR remote controls)." );
-  BIND_METHOD(ALInfrared::confRemoteRecordAddKey);
-
-  functionName("confRemoteRecordGetStatus", "ALInfrared", "Called when the user validate a new key name.");
-  setReturn("return","Returns the last message given by irrecord (LIRC program to record IR remote controls)." );
-  BIND_METHOD(ALInfrared::confRemoteRecordGetStatus);
-
-  functionName("confRemoteRecordCancel", "ALInfrared", "Kill irrecord (LIRC program to record IR remote controls).");
-  setReturn("return","Returns \"#BEGIN#\" to tell the web page to start from the beginning." );
-  BIND_METHOD(ALInfrared::confRemoteRecordCancel);
-
   try {
     fSTM = getParentBroker()->getMemoryProxy();
   } catch(ALError& e) {
     qiLogError("hardware.alinfrared") << "IR could not connect to Memory. Error : " << e.what() << endl;
   }
-
   fSTM->declareEvent(ALMEMORY_Remote_Event);
   fSTM->declareEvent(ALMEMORY_uInt8_Event);
   fSTM->declareEvent(ALMEMORY_IP_Event);
