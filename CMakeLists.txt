@@ -11,6 +11,10 @@
 project(ALInfrared)
 cmake_minimum_required(VERSION 2.6.4 FATAL_ERROR)
 
+if(NOT I_AM_A_ROBOT)
+    return()
+endif()
+
 include("${CMAKE_CURRENT_SOURCE_DIR}/bootstrap.cmake")
 
 set(INFRARED_SRCS
