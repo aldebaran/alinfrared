@@ -672,6 +672,9 @@ ALInfrared::ALInfrared(boost::shared_ptr<AL::ALBroker> broker, const std::string
   completeAndCheck<ALInfrared, const int&, const int&, const int&, const int&, void> (&ALInfrared::send32, getCurrentMethodDescription());
   bindMethodOverload(createFunctor<ALInfrared, int, int, int, int, void> (this, &ALInfrared::send32));
 
+  functionName("confRemoteRecordSave", "ALInfrared",  "Rewrite the LIRC daemon configuration file (lircd.conf) with every"
+                                                      "remotes configuration concatenated, and reload it in LIRC daemons");
+  BIND_METHOD(ALInfrared::confRemoteRecordSave);
   try {
     fSTM = getParentBroker()->getMemoryProxy();
   } catch(ALError& e) {
