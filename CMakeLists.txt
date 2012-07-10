@@ -8,14 +8,14 @@
 ## Copyright (C) 2009, 2011 Aldebaran Robotics
 ##
 
-project(ALInfrared)
 cmake_minimum_required(VERSION 2.6.4 FATAL_ERROR)
+project(ALInfrared)
+find_package(qibuild)
 
 if(NOT I_AM_A_ROBOT)
     return()
 endif()
 
-include("${CMAKE_CURRENT_SOURCE_DIR}/bootstrap.cmake")
 
 set(INFRARED_SRCS
   src/alinfrared.h
@@ -25,4 +25,3 @@ set(INFRARED_SRCS
 
 qi_create_lib(infrared SHARED SUBFOLDER naoqi ${INFRARED_SRCS})
 qi_use_lib(infrared ALCOMMON ALMATH LIRCCLIENT)
-

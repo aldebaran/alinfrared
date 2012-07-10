@@ -1,5 +1,0 @@
-[project alinfrared]
-# Add your project dependencies here:
-depends = libqi libnaoqi lirc
-
-
