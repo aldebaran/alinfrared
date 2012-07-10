@@ -533,8 +533,7 @@ void ALInfrared::send32(const int& pOctet1, const int& pOctet2, const int& pOcte
 int ALInfrared::send(const std::string& remote, const std::string& key, int timeMs)
 {
   int ret;
-
-  ret = lirc_send_key_with_time(lircd1_sock.c_str(), remote.c_str(), key.c_str(), timeMs);
+  ret = lirc_send_key_with_time(remote.c_str(), key.c_str(), timeMs);
 
   return ret;
 }
@@ -689,13 +688,16 @@ ALInfrared::ALInfrared(boost::shared_ptr<AL::ALBroker> broker, const std::string
 
   pthread_create(&rmctrlThreadId, NULL, rmctrlThread, (void *)this);
 
+  if (lirc_init_emission() < 0)
+	  qiLogError("hardware.alinfrared") << "Can't initalize emission";
+
 }
 
 ALInfrared::~ALInfrared()
 {
   fIsExiting = true;
   usleep(100000); // Worst case
-
+  lirc_deinit_emission();
   // A try block
   try {
     if(lirc_lircd_rcv!=-1) lirc_deinit();
