@@ -31,4 +31,4 @@ set(INFRARED_SRCS
 )
 
 qi_create_lib(infrared SHARED SUBFOLDER naoqi ${INFRARED_SRCS})
-qi_use_lib(infrared ALCOMMON ALMATH LIRCCLIENT)
+qi_use_lib(infrared ALCOMMON ALMATH LIRCCLIENT ALPROXIES)
