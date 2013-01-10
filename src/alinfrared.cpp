@@ -180,7 +180,7 @@ void ALInfrared::remoteControlThread()
 
     while(ready_to_get)
     {
-      qiLog=Info("hardware.alinfrared") << "remoteControlThread(): " << "Ready to get remote controls keys." << std::endl;
+      qiLogInfo("hardware.alinfrared") << "remoteControlThread(): " << "Ready to get remote controls keys." << std::endl;
 
       usleep(50000);
 
