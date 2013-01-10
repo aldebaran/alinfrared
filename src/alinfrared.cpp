@@ -180,7 +180,7 @@ void ALInfrared::remoteControlThread()
 
     while(ready_to_get)
     {
-      qiLogInfo("hardware.alinfrared") << "remoteControlThread(): " << "Ready to get remote controls keys." << std::endl;
+      qiLog=Info("hardware.alinfrared") << "remoteControlThread(): " << "Ready to get remote controls keys." << std::endl;
 
       usleep(50000);
 
@@ -636,6 +636,24 @@ ALInfrared::ALInfrared(boost::shared_ptr<AL::ALBroker> broker, const std::string
   irrecord_aborted = false;
   lircd1_sock = LIRCD_SEND_SOCK;
   nao2nao = NAO2NAO;
+  int Robot_Model = -1;
+
+  try
+  {
+    Robot_Model = broker->getProxy("ALRobotModel")->call<int>(std::string("_getModelType"));
+  } 
+  catch(const ALError& e)
+  {
+    qiLogWarning("core.main") << "Error occured during Infrared Initialisation"
+                              << std::endl
+                              << "No Robot Model found."
+                              <<  e.what()
+                              << std::endl;
+  }
+  if (Robot_Model != 0)//if not nao
+  {
+    return; // We Bind the method only if the robot model is nao
+  }
 
   setModuleDescription( "This module works with Linux Infrared Remote Control (LIRC) "
                         "in order to emit/receive IR remotes keys "
