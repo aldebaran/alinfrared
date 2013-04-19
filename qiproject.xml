@@ -1,3 +1,4 @@
 <project name="alinfrared">
-  <depends buildtime="true" names="lirc libqi libnaoqi libalmath"/>
+  <depends buildtime="true" names="lirc libqi libnaoqi libalmath" />
+  <maintainer email="cung@aldebaran-robotics.com">Christophe Ung</maintainer>
 </project>
