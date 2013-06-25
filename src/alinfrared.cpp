@@ -636,12 +636,12 @@ ALInfrared::ALInfrared(boost::shared_ptr<AL::ALBroker> broker, const std::string
   irrecord_aborted = false;
   lircd1_sock = LIRCD_SEND_SOCK;
   nao2nao = NAO2NAO;
-  int Robot_Model = -1;
+  std::string Robot_Model;
 
   try
   {
-    Robot_Model = broker->getProxy("ALRobotModel")->call<int>(std::string("_getModelType"));
-  } 
+    Robot_Model = broker->getProxy("ALRobotModel")->call<std::string>(std::string("_getRobotTypeString"));
+  }
   catch(const ALError& e)
   {
     qiLogWarning("core.main") << "Error occured during Infrared Initialisation"
@@ -650,7 +650,7 @@ ALInfrared::ALInfrared(boost::shared_ptr<AL::ALBroker> broker, const std::string
                               <<  e.what()
                               << std::endl;
   }
-  if (Robot_Model != 0)//if not nao
+  if (Robot_Model != "nao")
   {
     return; // We Bind the method only if the robot model is nao
   }
