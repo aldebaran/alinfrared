@@ -140,19 +140,8 @@ static bool fileExist (const string& file)
 /************************* THREAD to receive from remote control ******************************/
 /**********************************************************************************************/
 
-void * rmctrlThread(void * ptr)
-{
-  ((ALInfrared*)ptr)->remoteControlThread();
-  return NULL;
-}
-
 void ALInfrared::remoteControlThread()
 {
-#if defined (__linux__)
-  // thread name
-  prctl(PR_SET_NAME, "remoteControlThread", 0, 0, 0);
-#endif
-
   std::string IP_adress;
   std::string sn_cmp;
   int uInt8_1;
@@ -160,195 +149,172 @@ void ALInfrared::remoteControlThread()
   int uInt32_2;
   int uInt32_3;
   int uInt32_4;
-
   char *code;
   int repeat_code_num;
-
   char IR_data_state = NONE;
 
+  qiLogInfo("hardware.alinfrared") << "remoteControlThread(): " << "Ready to get remote controls keys." << std::endl;
 
-  while(!fIsExiting)
+  lirc_readconfig(NULL,&config1,NULL);
+
+  while((lirc_nextcode(&code)==0))
   {
-    for (int i=0; i<20;  i++)
+    if(code!=NULL)
     {
-      usleep(10000);
-      if (fIsExiting)
+      const std::string s = code;
+      unsigned int found;
+      unsigned int prevfound = 0;
+      unsigned char index_found = 0;
+      string RemoteValues[5];
+
+      found=s.find_first_of(" ");
+      while ((found != string::npos) && (index_found < 5))
       {
-        return;
+        RemoteValues[index_found++].assign(s, prevfound, (found - prevfound));
+        prevfound = found + 1;
+        found = s.find_first_of(" ", found + 1);
       }
-    }
+      RemoteValues[index_found].assign(s,prevfound,1);
 
-    while(ready_to_get)
-    {
-      qiLogInfo("hardware.alinfrared") << "remoteControlThread(): " << "Ready to get remote controls keys." << std::endl;
 
-      usleep(50000);
-
-      lirc_readconfig(NULL,&config1,NULL);
-
-      if(ready_to_get)
+      /***********************************************/
+      /** Check if an other Nao try to communicate ***/
+      /***********************************************/
+      if(!RemoteValues[LIRC_REMOTE].compare("nao2nao"))
       {
-        while((lirc_nextcode(&code)==0) && ready_to_get)
+
+        /***********************************************/
+        /******** State Machine to get an IP  **********/
+        /***********************************************/
+        if(!RemoteValues[LIRC_KEY].compare("val_IP"))
         {
-          if(code!=NULL)
-          {
-            const std::string s = code;
-            unsigned int found;
-            unsigned int prevfound = 0;
-            unsigned char index_found = 0;
-            string RemoteValues[5];
-
-            found=s.find_first_of(" ");
-            while ((found != string::npos) && (index_found < 5))
-            {
-              RemoteValues[index_found++].assign(s, prevfound, (found - prevfound));
-              prevfound = found + 1;
-              found = s.find_first_of(" ", found + 1);
-            }
-            RemoteValues[index_found].assign(s,prevfound,1);
-
-
-            /***********************************************/
-            /** Check if an other Nao try to communicate ***/
-            /***********************************************/
-            if(!RemoteValues[LIRC_REMOTE].compare("nao2nao"))
-            {
-
-              /***********************************************/
-              /******** State Machine to get an IP  **********/
-              /***********************************************/
-              if(!RemoteValues[LIRC_KEY].compare("val_IP"))
-              {
-                IR_data_state = IP;
-              }
-              else if(IR_data_state == IP)
-              {
-                IR_data_state=IP1;
-                IP_adress = RemoteValues[LIRC_KEY].substr(4);
-              }
-              else if(IR_data_state == IP1)
-              {
-                IR_data_state=IP2;
-                IP_adress += "." + RemoteValues[LIRC_KEY].substr(4);
-              }
-              else if(IR_data_state == IP2)
-              {
-                IR_data_state=IP3;
-                IP_adress += "." + RemoteValues[LIRC_KEY].substr(4);
-              }
-              else if(IR_data_state == IP3)
-              {
-                IR_data_state=IP4;
-                IP_adress += "." + RemoteValues[LIRC_KEY].substr(4);
-                fSTM->insertData(ALMEMORY_S_IP, IP_adress);
-                fSTM->raiseEvent(ALMEMORY_IP_Event, IP_adress);
-              }
-
-              /***********************************************/
-              /**** State Machine to get one byte of data ****/
-              /***********************************************/
-              if(!RemoteValues[LIRC_KEY].compare("val_UINT8"))
-              {
-                IR_data_state = UINT8;
-              }
-              else if(IR_data_state == UINT8)
-              {
-                IR_data_state = UINT8_1;
-                uInt8_1 = str2int(RemoteValues[LIRC_KEY].substr(4));
-                fSTM->insertData(ALMEMORY_S_uInt8, uInt8_1);
-                fSTM->raiseEvent(ALMEMORY_uInt8_Event, uInt8_1);
-              }
-
-              /***********************************************/
-              /***  State Machine to get 4 bytes of data  ****/
-              /***********************************************/
-              if(!RemoteValues[LIRC_KEY].compare("val_UINT32"))
-              {
-                IR_data_state = UINT32;
-              }
-              else if(IR_data_state == UINT32)
-              {
-                IR_data_state = UINT32_1;
-                uInt32_1 = str2int(RemoteValues[LIRC_KEY].substr(4));
-              }
-              else if(IR_data_state == UINT32_1)
-              {
-                IR_data_state = UINT32_2;
-                uInt32_2 = str2int(RemoteValues[LIRC_KEY].substr(4));
-              }
-              else if(IR_data_state == UINT32_2)
-              {
-                IR_data_state = UINT32_3;
-                uInt32_3 = str2int(RemoteValues[LIRC_KEY].substr(4));
-              }
-              else if(IR_data_state == UINT32_3)
-              {
-                IR_data_state = UINT32_4;
-                uInt32_4 = str2int(RemoteValues[LIRC_KEY].substr(4));
-                fSTM->insertData(ALMEMORY_S_uInt32_1, uInt32_1);
-                fSTM->insertData(ALMEMORY_S_uInt32_2, uInt32_2);
-                fSTM->insertData(ALMEMORY_S_uInt32_3, uInt32_3);
-                fSTM->insertData(ALMEMORY_S_uInt32_4, uInt32_4);
-
-                AL::ALValue uInt32Event;
-                uInt32Event.arrayPush(uInt32_1);
-                uInt32Event.arrayPush(uInt32_2);
-                uInt32Event.arrayPush(uInt32_3);
-                uInt32Event.arrayPush(uInt32_4);
-                fSTM->raiseEvent(ALMEMORY_uInt32_Event, uInt32Event);
-              }
-
-
-            }
-            /***********************************************/
-            /** If it's not Nao, it's a remote control *****/
-            /***********************************************/
-            else
-            {
-              IR_data_state = NONE;
-
-              repeat_code_num = strhex2int(RemoteValues[LIRC_REPEAT]);
-
-              //Avoid multi-detect of one key until keyRepeatThreshold
-              if((abs(RemoteValues[LIRC_HEX].compare(sn_cmp))) || (repeat_code_num == 0) || (repeat_code_num >= keyRepeatThreshold))
-              {
-                sn_cmp = RemoteValues[LIRC_HEX];
-
-                AL::ALValue RemoteEvent;
-                RemoteEvent.arrayPush(RemoteValues[LIRC_HEX]);
-                RemoteEvent.arrayPush(strhex2int(RemoteValues[LIRC_REPEAT]));
-                RemoteEvent.arrayPush(RemoteValues[LIRC_KEY]);
-                RemoteEvent.arrayPush(RemoteValues[LIRC_REMOTE]);
-                RemoteEvent.arrayPush(str2int(RemoteValues[LIRC_SIDE]));
-                fSTM->raiseEvent(ALMEMORY_Remote_Event, RemoteEvent);
-
-                fSTM->insertData(ALMEMORY_S_LircCode, RemoteValues[LIRC_HEX]);
-                fSTM->insertData(ALMEMORY_S_Repeat, RemoteValues[LIRC_REPEAT]);
-                fSTM->insertData(ALMEMORY_S_Key, RemoteValues[LIRC_KEY]);
-                fSTM->insertData(ALMEMORY_S_Remote, RemoteValues[LIRC_REMOTE]);
-                fSTM->insertData(ALMEMORY_S_IrSide, RemoteValues[LIRC_SIDE]);
-
-                qiLogInfo("hardware.alinfrared") << "remoteControlThread(): " << "Got a key: " << s << std::endl;
-              }
-            }
-
-            fSTM->raiseEvent(ALMEMORY_IrSide_Event, str2int(RemoteValues[LIRC_SIDE]));
-
-            free(code);
-          }
+          IR_data_state = IP;
         }
-        lirc_freeconfig(config1);
+        else if(IR_data_state == IP)
+        {
+          IR_data_state=IP1;
+          IP_adress = RemoteValues[LIRC_KEY].substr(4);
+        }
+        else if(IR_data_state == IP1)
+        {
+          IR_data_state=IP2;
+          IP_adress += "." + RemoteValues[LIRC_KEY].substr(4);
+        }
+        else if(IR_data_state == IP2)
+        {
+          IR_data_state=IP3;
+          IP_adress += "." + RemoteValues[LIRC_KEY].substr(4);
+        }
+        else if(IR_data_state == IP3)
+        {
+          IR_data_state=IP4;
+          IP_adress += "." + RemoteValues[LIRC_KEY].substr(4);
+          fSTM->insertData(ALMEMORY_S_IP, IP_adress);
+          fSTM->raiseEvent(ALMEMORY_IP_Event, IP_adress);
+        }
+
+        /***********************************************/
+        /**** State Machine to get one byte of data ****/
+        /***********************************************/
+        if(!RemoteValues[LIRC_KEY].compare("val_UINT8"))
+        {
+          IR_data_state = UINT8;
+        }
+        else if(IR_data_state == UINT8)
+        {
+          IR_data_state = UINT8_1;
+          uInt8_1 = str2int(RemoteValues[LIRC_KEY].substr(4));
+          fSTM->insertData(ALMEMORY_S_uInt8, uInt8_1);
+          fSTM->raiseEvent(ALMEMORY_uInt8_Event, uInt8_1);
+        }
+
+        /***********************************************/
+        /***  State Machine to get 4 bytes of data  ****/
+        /***********************************************/
+        if(!RemoteValues[LIRC_KEY].compare("val_UINT32"))
+        {
+          IR_data_state = UINT32;
+        }
+        else if(IR_data_state == UINT32)
+        {
+          IR_data_state = UINT32_1;
+          uInt32_1 = str2int(RemoteValues[LIRC_KEY].substr(4));
+        }
+        else if(IR_data_state == UINT32_1)
+        {
+          IR_data_state = UINT32_2;
+          uInt32_2 = str2int(RemoteValues[LIRC_KEY].substr(4));
+        }
+        else if(IR_data_state == UINT32_2)
+        {
+          IR_data_state = UINT32_3;
+          uInt32_3 = str2int(RemoteValues[LIRC_KEY].substr(4));
+        }
+        else if(IR_data_state == UINT32_3)
+        {
+          IR_data_state = UINT32_4;
+          uInt32_4 = str2int(RemoteValues[LIRC_KEY].substr(4));
+          fSTM->insertData(ALMEMORY_S_uInt32_1, uInt32_1);
+          fSTM->insertData(ALMEMORY_S_uInt32_2, uInt32_2);
+          fSTM->insertData(ALMEMORY_S_uInt32_3, uInt32_3);
+          fSTM->insertData(ALMEMORY_S_uInt32_4, uInt32_4);
+
+          AL::ALValue uInt32Event;
+          uInt32Event.arrayPush(uInt32_1);
+          uInt32Event.arrayPush(uInt32_2);
+          uInt32Event.arrayPush(uInt32_3);
+          uInt32Event.arrayPush(uInt32_4);
+          fSTM->raiseEvent(ALMEMORY_uInt32_Event, uInt32Event);
+        }
+
+
+      }
+      /***********************************************/
+      /** If it's not Nao, it's a remote control *****/
+      /***********************************************/
+      else
+      {
+        IR_data_state = NONE;
+
+        repeat_code_num = strhex2int(RemoteValues[LIRC_REPEAT]);
+
+        //Avoid multi-detect of one key until keyRepeatThreshold
+        if((abs(RemoteValues[LIRC_HEX].compare(sn_cmp))) || (repeat_code_num == 0) || (repeat_code_num >= keyRepeatThreshold))
+        {
+          sn_cmp = RemoteValues[LIRC_HEX];
+
+          AL::ALValue RemoteEvent;
+          RemoteEvent.arrayPush(RemoteValues[LIRC_HEX]);
+          RemoteEvent.arrayPush(strhex2int(RemoteValues[LIRC_REPEAT]));
+          RemoteEvent.arrayPush(RemoteValues[LIRC_KEY]);
+          RemoteEvent.arrayPush(RemoteValues[LIRC_REMOTE]);
+          RemoteEvent.arrayPush(str2int(RemoteValues[LIRC_SIDE]));
+          fSTM->raiseEvent(ALMEMORY_Remote_Event, RemoteEvent);
+
+          fSTM->insertData(ALMEMORY_S_LircCode, RemoteValues[LIRC_HEX]);
+          fSTM->insertData(ALMEMORY_S_Repeat, RemoteValues[LIRC_REPEAT]);
+          fSTM->insertData(ALMEMORY_S_Key, RemoteValues[LIRC_KEY]);
+          fSTM->insertData(ALMEMORY_S_Remote, RemoteValues[LIRC_REMOTE]);
+          fSTM->insertData(ALMEMORY_S_IrSide, RemoteValues[LIRC_SIDE]);
+
+          qiLogInfo("hardware.alinfrared") << "remoteControlThread(): " << "Got a key: " << s << std::endl;
+        }
       }
 
-      if(lirc_lircd_rcv!=-1)
-      {
-        lirc_deinit();
-        lirc_lircd_rcv=-1;
-      }
+      fSTM->raiseEvent(ALMEMORY_IrSide_Event, str2int(RemoteValues[LIRC_SIDE]));
+
+      free(code);
     }
   }
+  lirc_freeconfig(config1);
 
+  if(lirc_lircd_rcv!=-1)
+  {
+    lirc_deinit();
+    lirc_lircd_rcv=-1;
+  }
 }
+
 
 /**********************************************************************************************/
 /********************** RECEIVE IR ************************************************************/
@@ -364,8 +330,7 @@ void ALInfrared::initReception(const int& pRepeatThreshold)
   if(lirc_lircd_rcv == -1)
     lirc_lircd_rcv = lirc_init(proglirc, 1);
 
-  if(ready_to_get == FALSE)
-    ready_to_get = TRUE;
+  fAsyncTask.start();
 }
 
 
@@ -377,8 +342,7 @@ void ALInfrared::deinitReception(void)
     lirc_lircd_rcv = -1;
   }
 
-  if(ready_to_get == TRUE)
-    ready_to_get = FALSE;
+  fAsyncTask.stop();
 }
 
 
@@ -626,11 +590,8 @@ void ALInfrared::confRemoteRecordSave(void)
 
 ALInfrared::ALInfrared(boost::shared_ptr<AL::ALBroker> broker, const std::string& name ): AL::ALModule(broker, name )
 {
-  fIsExiting = false;
-  rmctrlThreadId = 0;
   pipeThreadId = 0;
   lirc_lircd_rcv = -1;
-  ready_to_get = FALSE;
   keyRepeatThreshold = 10;
   MsgCounter = 0;
   irrecord_aborted = false;
@@ -718,17 +679,19 @@ ALInfrared::ALInfrared(boost::shared_ptr<AL::ALBroker> broker, const std::string
 
   fSTM->declareEvent(ALMEMORY_IrSide_Event);
 
-  pthread_create(&rmctrlThreadId, NULL, rmctrlThread, (void *)this);
+  fAsyncTask.setName("RemoteControl");
+  fAsyncTask.setCallback(&ALInfrared::remoteControlThread, this);
+  fAsyncTask.setUsPeriod(50000);
 
   if (lirc_init_emission() < 0)
-	  qiLogError("hardware.alinfrared") << "Can't initalize emission";
+    qiLogError("hardware.alinfrared") << "Can't initalize emission";
 
 }
 
 ALInfrared::~ALInfrared()
 {
-  fIsExiting = true;
-  usleep(100000); // Worst case
+  fAsyncTask.stop();
+
   lirc_deinit_emission();
   // A try block
   try {
@@ -738,5 +701,3 @@ ALInfrared::~ALInfrared()
     qiLogError("hardware.alinfrared") << "Exception while disposing Lirc: " << e.what() << std::endl;
   }
 }
-
-
