@@ -19,7 +19,9 @@ cmake_minimum_required(VERSION 2.6.4 FATAL_ERROR)
 project(ALInfrared)
 find_package(qibuild)
 
-if(NOT I_AM_A_ROBOT)
+option(WITH_LIRC "enable lirc support" ON)
+
+if(NOT I_AM_A_ROBOT OR NOT WITH_LIRC)
     return()
 endif()
 
