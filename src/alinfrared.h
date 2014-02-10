@@ -58,6 +58,7 @@ typedef enum LIRCD_PART_OF_MSG {LIRC_HEX=0, LIRC_REPEAT, LIRC_KEY, LIRC_REMOTE, 
 #include <boost/shared_ptr.hpp>
 #include <alcommon/almodule.h>
 #include <alproxies/almemoryproxy.h>
+#include <qi/periodictask.hpp>
 
 namespace AL
 {
@@ -167,12 +168,11 @@ public:
 
 private:
 
-  pthread_t rmctrlThreadId;
+  qi::PeriodicTask fAsyncTask;
+
   pthread_t pipeThreadId;
 
   int lirc_lircd_rcv;
-
-  char ready_to_get;
 
   int wrfd;
 
@@ -183,11 +183,7 @@ private:
   int MsgCounter;
 
   bool irrecord_aborted;
-
-  bool fIsExiting;
-
 };
 
 
 #endif  // INFRARED_ALINFRARED_H
-
